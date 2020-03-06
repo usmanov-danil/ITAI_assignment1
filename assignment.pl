@@ -24,7 +24,7 @@ is_touchdown(X, Y) :-  % Check: is it touchdown point
     t(X, Y).
 
 choose_search(backtracking, Moves) :- assert(flag(0)), backtracking_search(0, 0, Moves, [(0, 0)]).  % Backtracking search
-choose_search(random, Moves) :- assert(flag(0)), assert(path([], 100)), retractall(solved(_)), random_loop(100, Moves).  % Random search  % random_search(0, 0, Moves, [(0, 0)])
+choose_search(random, Moves) :- assert(flag(0)), assert(path([], inf)), retractall(solved(_)), random_loop(100, _), path(Moves, _).  % Random search  % random_search(0, 0, Moves, [(0, 0)])
 choose_search(greedy, Moves) :- assert(flag(0)), greedy_search(0, 0, Moves, [(0, 0)]).  % Greedyy search
 
 % ================= BACKTRACKING SEARCH =================
@@ -38,21 +38,20 @@ backtracking_search(X, Y, [Step | Moves], Visited) :-  % Recursion step
 % ================= RANDOM SEARCH =================
 random_loop(0, _) :- solved(1) -> !; writeln("A path is not found:(").  % Loop base case 
 random_loop(NumberAttemp, Moves) :-  % Loop step case
-    random_search(0, 0, Path, [(0, 0)]);
-    length(Path, Length1), path(_, Length), 
-    (Length1 < Length -> (retractall(path(_,_)), assert(path(Path, Length1))));
+    writeln(NumberAttemp),
+    random_search(0, 0, Moves, [(0, 0)]); 
+    length(Moves, Length1);% path(_, Length);
 
+    % (Length1 < Length -> (retractall(path(_,_)), assert(path(PATH, Length1))));
     NumberAttemp1 is NumberAttemp - 1,
-    path(Moves, _), random_loop(NumberAttemp1, Moves).
+    random_loop(NumberAttemp1, []).
 
 random_search(X, Y, [], _) :- is_touchdown(X, Y), assert(solved(1)),  % Base case
     write("Jesus we got it! "), write(X), write(" "), write(Y), nl.
 random_search(X, Y, [Step | Moves], Visited) :-  % Recursion step
-    random_member(Step, [up, right, down, left, pass_up, pass_right, pass_down, pass_left, pass_up_rigth, pass_down_rigth, pass_down_left, pass_up_left]),
+    random_member(Step, [up, right, down, left]),%, pass_up, pass_right, pass_down, pass_left, pass_up_rigth, pass_down_rigth, pass_down_left, pass_up_left]),
     step(X, Y, X_NEXT, Y_NEXT, Step),
     check_position(X_NEXT, Y_NEXT, Visited) -> random_search(X_NEXT, Y_NEXT, Moves, [(X, Y) | Visited]).
-
-
 
 
 
@@ -154,10 +153,10 @@ go:-
 
 
     % Simple backtracking
-    choose_search(backtracking, Moves),
+    % choose_search(backtracking, Moves),
 
     % Random 
-    % choose_search(random, Moves),
+    choose_search(random, Moves),
 
     % Greedy
     % choose_search(greedy, Moves),
