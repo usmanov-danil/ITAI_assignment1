@@ -1,18 +1,14 @@
  % Input: Put here positions of orcs, humans and touchdown as <type>(X,Y)
+o(0, 1).
 o(1, 1).
 o(2, 1).
-o(3, 1).
-o(1, 3).
-o(2, 3).
-o(3, 3).
-h(4, 4).
-% h(1, 2).
-% h(1, 1).
-t(3, 4).
+o(2, 2).
+t(0, 2).
+h(3,3).
 
 % ================= Facts =================
-size(5).  % The size of one side of the field
-:- dynamic([flag/1, solved/1, path/2, score/1, min_hypt/2]).  % Dynamic fact
+size(4).  % The size of one side of the field
+:- dynamic([flag/1, solved/1, path/2, score/1, min_hypt/2, flag2/1]).  % Dynamic fact
 
 % ================= Rules =================
 wall_check(X, Y) :-  % Check that player is the inside field
@@ -39,6 +35,7 @@ backtracking_search(X, Y, [], _) :- is_touchdown(X, Y),  % Base case
 backtracking_search(X, Y, [Step | Moves], Visited) :-  % Recursion step
     step(X, Y, X_NEXT, Y_NEXT, Step), 
     check_position(X_NEXT, Y_NEXT, Visited),
+    write(X), write(" "), writeln(Y),
     score(Score), (h(X_NEXT, Y_NEXT) -> true; (retractall(score(_)), Score1 is Score + 1, assert(score(Score1)))),
     backtracking_search(X_NEXT, Y_NEXT, Moves, [(X, Y) | Visited]).
 
@@ -65,7 +62,9 @@ random_search(X, Y, [Step | Moves], Visited) :-  % Recursion step
 
 % ================= GREEDY SEARCH =================
 calc_hypt(X, Y, Step, Length, Visited) :-
+    (flag(0) -> (retractall(flag2(_)), assert(flag2(0))) ; (retractall(flag2(_)), assert(flag2(1)))),
     step(X, Y, X_NEXT, Y_NEXT, Step),
+    (flag2(0) -> (retractall(flag(_)), assert(flag(0))); true),
     t(X_TOUCH, Y_TOUCH),
     (check_position(X_NEXT, Y_NEXT, Visited)
     -> (Length is sqrt((X_TOUCH - X_NEXT)**2 + (Y_TOUCH - Y_NEXT)**2)) ; Length is inf).
@@ -80,8 +79,10 @@ greedy_search(X, Y, [], _) :- is_touchdown(X, Y),  % Base case
     write("Jesus we got it! "), write(X), write(" "), write(Y), nl.
 greedy_search(X, Y, [Step | Moves], Visited) :-  % Recursion step
     retractall(min_hypt(_,_)), assert(min_hypt(up, inf)),
-    greedy(Step, [up, right, down, left], X, Y, Visited),
-    step(X, Y, X_NEXT, Y_NEXT, Step), !, 
+    retractall(flag2(_)), assert(flag2(0)),
+
+    greedy(Step, [up, right, down, left, pass_up, pass_right, pass_down, pass_left, pass_up_rigth, pass_down_rigth, pass_down_left, pass_up_left], X, Y, Visited),
+    step(X, Y, X_NEXT, Y_NEXT, Step), write(X), write(" "), writeln(Y), !, 
     check_position(X_NEXT, Y_NEXT, Visited) -> 
     (
         score(Score), (h(X_NEXT, Y_NEXT) -> true; (retractall(score(_)), Score1 is Score + 1, assert(score(Score1)))),
@@ -177,13 +178,13 @@ go:-
 
 
     % Simple backtracking
-    % choose_search(backtracking, Moves),
+    choose_search(backtracking, Moves),
 
     % Random 
     % choose_search(random, Moves),
 
     % Greedy
-    choose_search(greedy, Moves),
+    % choose_search(greedy, Moves),
 
 
     % Calculate output
