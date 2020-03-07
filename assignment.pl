@@ -1,13 +1,18 @@
  % Input: Put here positions of orcs, humans and touchdown as <type>(X,Y)
-o(2, 2).
-h(2, 0).
-h(0, 2).
-h(1, 1).
-t(3, 2).
+o(1, 1).
+o(2, 1).
+o(3, 1).
+o(1, 3).
+o(2, 3).
+o(3, 3).
+h(4, 4).
+% h(1, 2).
+% h(1, 1).
+t(3, 4).
 
 % ================= Facts =================
-size(4).  % The size of one side of the field
-:- dynamic([flag/1, solved/1, path/2, score/1]).  % Dynamic fact
+size(5).  % The size of one side of the field
+:- dynamic([flag/1, solved/1, path/2, score/1, min_hypt/2]).  % Dynamic fact
 
 % ================= Rules =================
 wall_check(X, Y) :-  % Check that player is the inside field
@@ -26,7 +31,7 @@ is_touchdown(X, Y) :-  % Check: is it touchdown point
 % ================= SEARCH VARIANTS =================
 choose_search(backtracking, Moves) :- assert(flag(0)), assert(score(0)), backtracking_search(0, 0, Moves, [(0, 0)]).  % Backtracking search
 choose_search(random, Moves) :- assert(flag(0)), assert(score(0)), assert(path([], inf)), retractall(solved(_)), random_loop(10000), path(Moves, _).  % Random search  % random_search(0, 0, Moves, [(0, 0)])
-choose_search(greedy, Moves) :- assert(flag(0)), greedy_search(0, 0, Moves, [(0, 0)]).  % Greedyy search
+choose_search(greedy, Moves) :- assert(flag(0)), assert(score(0)), assert(min_hypt(up, inf)), greedy_search(0, 0, Moves, [(0, 0)]).  % Greedyy search
 
 % ================= BACKTRACKING SEARCH =================
 backtracking_search(X, Y, [], _) :- is_touchdown(X, Y),  % Base case
@@ -59,10 +64,23 @@ random_search(X, Y, [Step | Moves], Visited) :-  % Recursion step
     ).
 
 % ================= GREEDY SEARCH =================
+calc_hypt(X, Y, Step, Length, Visited) :-
+    step(X, Y, X_NEXT, Y_NEXT, Step),
+    t(X_TOUCH, Y_TOUCH),
+    (check_position(X_NEXT, Y_NEXT, Visited)
+    -> (Length is sqrt((X_TOUCH - X_NEXT)**2 + (Y_TOUCH - Y_NEXT)**2)) ; Length is inf).
+
+greedy(Step, [], _, _, _) :- min_hypt(Step, _).
+greedy(Step, [First | Tail], X, Y, Visited) :-
+    calc_hypt(X, Y, First, Length, Visited), min_hypt(_, Min_length),
+    (Length < Min_length -> (retractall(min_hypt(_,_)), assert(min_hypt(First, Length))) ; true),
+    greedy(Step, Tail, X, Y, Visited). 
+
 greedy_search(X, Y, [], _) :- is_touchdown(X, Y),  % Base case
     write("Jesus we got it! "), write(X), write(" "), write(Y), nl.
 greedy_search(X, Y, [Step | Moves], Visited) :-  % Recursion step
-    
+    retractall(min_hypt(_,_)), assert(min_hypt(up, inf)),
+    greedy(Step, [up, right, down, left], X, Y, Visited),
     step(X, Y, X_NEXT, Y_NEXT, Step), !, 
     check_position(X_NEXT, Y_NEXT, Visited) -> 
     (
@@ -162,10 +180,10 @@ go:-
     % choose_search(backtracking, Moves),
 
     % Random 
-    choose_search(random, Moves),
+    % choose_search(random, Moves),
 
     % Greedy
-    % choose_search(greedy, Moves),
+    choose_search(greedy, Moves),
 
 
     % Calculate output
