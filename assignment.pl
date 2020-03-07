@@ -1,15 +1,21 @@
  % Input: Put here positions of orcs, humans and touchdown as <type>(X,Y)
 %  include(input.pl).  % If you want to include input file with facts, uncomment this line and put file uinput,pl near the current file.
-% Map 3
-o(0, 1).
-o(1, 1).
+
 o(2, 1).
-o(2,2).
-h(3, 0).
-t(0, 2).
+o(2, 4).
+o(2, 7).
+o(5, 6).
+o(5, 8).
+o(7, 1).
+o(8, 5).
+h(5, 2).
+h(6, 5).
+h(3, 5).
+h(1, 8).
+t(9, 9).
 
 % ================= Facts =================
-size(4).  % The size of one side of the field
+size(10).  % The size of one side of the field
 :- dynamic([flag/1, solved/1, path/2, score/1, min_hypt/2, flag2/1]).  % Dynamic fact
 
 % ================= Rules =================
@@ -102,6 +108,7 @@ step(X, Y, X_NEXT, Y_NEXT, pass_up) :-  % Pass UP
     flag(0),
     h(X, Y_NEXT),
     Y_NEXT > Y,
+    not((h(X, Y_hum), Y_hum > Y, Y_hum < Y_NEXT)),
     not((o(X, Y_orc), Y_orc > Y, Y_orc < Y_NEXT)),
     X_NEXT is X,
     retract(flag(_)),
@@ -111,6 +118,7 @@ step(X, Y, X_NEXT, Y_NEXT, pass_right) :-  % Pass RIRHT
     flag(0),
     h(X_NEXT, Y),
     X_NEXT > X,
+    not((h(X_hum, Y), X_hum > X, X_hum < X_NEXT)),
     not((o(X_orc, Y), X_orc > X, X_orc < X_NEXT)),
     Y_NEXT is Y,
     retract(flag(_)),
@@ -120,6 +128,7 @@ step(X, Y, X_NEXT, Y_NEXT, pass_down) :-  % Pass DOWN
     flag(0),
     h(X, Y_NEXT),
     Y_NEXT < Y,
+    not((h(X, Y_hum), Y_hum < Y, Y_hum > Y_NEXT)),
     not((o(X, Y_orc), Y_orc < Y, Y_orc > Y_NEXT)),
     X_NEXT is X,
     retract(flag(_)),
@@ -129,6 +138,7 @@ step(X, Y, X_NEXT, Y_NEXT, pass_left) :-  % Pass Left
     flag(0),
     h(X_NEXT, Y),
     X_NEXT < X,
+    not((h(X_hum, Y), X_hum < X, X_hum > X_NEXT)),
     not((o(X_orc, Y), X_orc < X, X_orc > X_NEXT)),
     Y_NEXT is Y,
     retract(flag(_)),
@@ -137,6 +147,8 @@ step(X, Y, X_NEXT, Y_NEXT, pass_left) :-  % Pass Left
 step(X, Y, X_NEXT, Y_NEXT, pass_up_rigth) :-  % Pass UP-Right
     flag(0),
     h(X_NEXT, Y_NEXT),
+    not((h(X_hum, Y_hum), X_DIF_HUM is X_hum - X, Y_DIF_HUM is Y_hum - Y)),
+    not(((Y_hum < Y_NEXT), (Y_hum > Y), (X_hum < X_NEXT), (X_hum > X), (X_DIF_HUM is Y_DIF_HUM))),
     not((o(X_orc, Y_orc), X_DIF is X_orc - X, Y_DIF is Y_orc - Y)),
     not(((Y_orc < Y_NEXT), (Y_orc > Y), (X_orc < X_NEXT), (X_orc > X), (X_DIF is Y_DIF))),
     retract(flag(_)),
@@ -145,6 +157,8 @@ step(X, Y, X_NEXT, Y_NEXT, pass_up_rigth) :-  % Pass UP-Right
 step(X, Y, X_NEXT, Y_NEXT, pass_down_rigth) :-  % Pass RIRHT-Down
     flag(0),
     h(X_NEXT, Y_NEXT),
+    not(( h(X_hum, Y_hum), X_DIF_HUM is X_hum - X, Y_DIF_HUM is Y - Y_hum)),
+    not(((Y_hum > Y_NEXT), (Y_hum < Y), (X_hum < X_NEXT), (X_hum > X), (X_DIF_HUM is Y_DIF_HUM))),
     not(( o(X_orc, Y_orc), X_DIF is X_orc - X, Y_DIF is Y - Y_orc)),
     not(((Y_orc > Y_NEXT), (Y_orc < Y), (X_orc < X_NEXT), (X_orc > X), (X_DIF is Y_DIF))),
     retract(flag(_)),
@@ -153,6 +167,8 @@ step(X, Y, X_NEXT, Y_NEXT, pass_down_rigth) :-  % Pass RIRHT-Down
 step(X, Y, X_NEXT, Y_NEXT, pass_down_left) :-  % Pass Left-DOWN
     flag(0),
     h(X_NEXT, Y_NEXT),
+    not((h(X_hum, Y_hum), X_DIF_HUM is X - X_hum, Y_DIF_HUM is Y - Y_hum)),
+    not(((Y_hum > Y_NEXT), (Y_hum < Y), (X_hum > X_NEXT), (X_hum < X), (X_DIF_HUM is Y_DIF_HUM))),
     not((o(X_orc, Y_orc), X_DIF is X - X_orc, Y_DIF is Y - Y_orc)),
     not(((Y_orc > Y_NEXT), (Y_orc < Y), (X_orc > X_NEXT), (X_orc < X), (X_DIF is Y_DIF))),
     retract(flag(_)),
@@ -161,6 +177,8 @@ step(X, Y, X_NEXT, Y_NEXT, pass_down_left) :-  % Pass Left-DOWN
 step(X, Y, X_NEXT, Y_NEXT, pass_up_left) :-  % Pass Up-Left
     flag(0),
     h(X_NEXT, Y_NEXT),
+    not((h(X_hum, Y_hum), X_DIF_HUM is X - X_hum, Y_DIF_HUM is Y_hum - Y)),
+    not(((Y_hum < Y_NEXT), (Y_hum > Y), (X_hum > X_NEXT), (X_hum < X), (X_DIF_HUM is Y_DIF_HUM))),
     not((o(X_orc, Y_orc), X_DIF is X - X_orc, Y_DIF is Y_orc - Y)),
     not(((Y_orc < Y_NEXT), (Y_orc > Y), (X_orc > X_NEXT), (X_orc < X), (X_DIF is Y_DIF))),
     retract(flag(_)),
@@ -188,13 +206,13 @@ go:-
     statistics(runtime,[Start|_]),
 
     % Simple backtracking
-    choose_search(backtracking, Moves),
+    % choose_search(backtracking, Moves),
 
     % Random 
     % choose_search(random, Moves),
 
     % Greedy
-    % choose_search(greedy, Moves),
+    choose_search(greedy, Moves),
 
     % Calculate output
     statistics(runtime,[Stop|_]),
