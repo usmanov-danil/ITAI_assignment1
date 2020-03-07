@@ -16,6 +16,7 @@ t(9, 9).
 
 % ================= Facts =================
 size(10).  % The size of one side of the field
+attemp(100000). % The number of attemps for random search
 :- dynamic([flag/1, solved/1, path/2, score/1, min_hypt/2, flag2/1]).  % Dynamic fact
 
 % ================= Rules =================
@@ -34,7 +35,7 @@ is_touchdown(X, Y) :-  % Check: is it touchdown point
 
 % ================= SEARCH VARIANTS =================
 choose_search(backtracking, Moves) :- assert(flag(0)), assert(score(0)), backtracking_search(0, 0, Moves, [(0, 0)]).  % Backtracking search
-choose_search(random, Moves) :- assert(flag(0)), assert(score(0)), assert(path([], inf)), retractall(solved(_)), random_loop(1000000), retractall(score(_)), path(Moves, Score), assert(score(Score)).  % Random search 
+choose_search(random, Moves) :- assert(flag(0)), assert(score(0)), assert(path([], inf)), retractall(solved(_)), attemp(Attemp), random_loop(Attemp), retractall(score(_)), path(Moves, Score), assert(score(Score)).  % Random search 
 choose_search(greedy, Moves) :- assert(flag(0)), assert(score(0)), assert(min_hypt(up, inf)), greedy_search(0, 0, Moves, [(0, 0)]).  % Greedyy search
 
 % ================= BACKTRACKING SEARCH =================
@@ -60,17 +61,19 @@ random_loop(NumberAttemp) :-  % Loop step case
 random_search(X, Y, [], _) :- is_touchdown(X, Y), assert(solved(1)),  % Base case
     write("We got it! "), write(X), write(" "), write(Y), nl.
 random_search(X, Y, [Step | Moves], Visited) :-  % Recursion step
-    random_member(Step, [up, right, down, left, pass_up, pass_right, pass_down, pass_left]),% pass_up, pass_right, pass_down, pass_left, pass_up_rigth, pass_down_rigth, pass_down_left, pass_up_left]),
+    random_member(Step, [up, right, down, left, pass_up, pass_right, pass_down, pass_left]),
     step(X, Y, X_NEXT, Y_NEXT, Step), !, 
     check_position(X_NEXT, Y_NEXT, Visited) -> 
     (
-        score(Score), (h(X_NEXT, Y_NEXT) -> true; (retractall(score(_)), Score1 is Score + 1, assert(score(Score1)))),
+        score(Score), (h(X_NEXT, Y_NEXT) -> true; (retractall(score(_)),
+         Score1 is Score + 1, assert(score(Score1)))),
         random_search(X_NEXT, Y_NEXT, Moves, [(X, Y) | Visited])
     ).
 
 % ================= GREEDY SEARCH =================
 calc_hypt(X, Y, Step, Length, Visited) :-
-    (flag(0) -> (retractall(flag2(_)), assert(flag2(0))) ; (retractall(flag2(_)), assert(flag2(1)))),
+    (flag(0) -> (retractall(flag2(_)), assert(flag2(0))) ; 
+    (retractall(flag2(_)), assert(flag2(1)))),
     t(X_TOUCH, Y_TOUCH),
     (step(X, Y, X_NEXT, Y_NEXT, Step) -> 
     (flag2(0) -> (retractall(flag(_)), assert(flag(0))); true),
@@ -79,10 +82,6 @@ calc_hypt(X, Y, Step, Length, Visited) :-
     ;
         Length is inf
     ).
-    % (flag2(0) -> (retractall(flag(_)), assert(flag(0))); true),
-    % (check_position(X_NEXT, Y_NEXT, Visited)
-    % -> (Length is sqrt((X_TOUCH - X_NEXT)**2 + (Y_TOUCH - Y_NEXT)**2)) ; Length is inf).
-
 greedy(Step, [], _, _, _) :- min_hypt(Step, _).
 greedy(Step, [First | Tail], X, Y, Visited) :-
     % writeln(First),
@@ -95,11 +94,12 @@ greedy_search(X, Y, [], _) :- is_touchdown(X, Y),  % Base case
 greedy_search(X, Y, [Step | Moves], Visited) :-  % Recursion step
     retractall(min_hypt(_,_)), assert(min_hypt(up, inf)),
     retractall(flag2(_)), assert(flag2(0)),
-    greedy(Step, [up, right, down, left], X, Y, Visited), %, pass_up, pass_right, pass_down, pass_left, pass_up_rigth, pass_down_rigth, pass_down_left, pass_up_left
+    greedy(Step, [up, right, down, left], X, Y, Visited),
     step(X, Y, X_NEXT, Y_NEXT, Step), !, 
     check_position(X_NEXT, Y_NEXT, Visited) -> 
     (
-        score(Score), (h(X_NEXT, Y_NEXT) -> true; (retractall(score(_)), Score1 is Score + 1, assert(score(Score1)))),
+        score(Score), (h(X_NEXT, Y_NEXT) -> true; (retractall(score(_)), 
+        Score1 is Score + 1, assert(score(Score1)))),
         greedy_search(X_NEXT, Y_NEXT, Moves, [(X, Y) | Visited])
     ).
 
