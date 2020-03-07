@@ -7,7 +7,7 @@ t(3, 2).
 
 % ================= Facts =================
 size(4).  % The size of one side of the field
-:- dynamic([flag/1, solved/1, path/2]).  % Dynamic fact
+:- dynamic([flag/1, solved/1, path/2, score/1]).  % Dynamic fact
 
 % ================= Rules =================
 wall_check(X, Y) :-  % Check that player is the inside field
@@ -23,46 +23,48 @@ check_position(X, Y, Visited) :-  % Check position on safety: not orc and not vi
 is_touchdown(X, Y) :-  % Check: is it touchdown point
     t(X, Y).
 
-choose_search(backtracking, Moves) :- assert(flag(0)), backtracking_search(0, 0, Moves, [(0, 0)]).  % Backtracking search
-choose_search(random, Moves) :- assert(flag(0)), assert(path([], inf)), retractall(solved(_)), random_loop(10000), path(Moves, _).  % Random search  % random_search(0, 0, Moves, [(0, 0)])
+choose_search(backtracking, Moves) :- assert(flag(0)), assert(score(0)), backtracking_search(0, 0, Moves, [(0, 0)]).  % Backtracking search
+choose_search(random, Moves) :- assert(flag(0)), assert(score(0)), assert(path([], inf)), retractall(solved(_)), random_loop(10000), path(Moves, _).  % Random search  % random_search(0, 0, Moves, [(0, 0)])
 choose_search(greedy, Moves) :- assert(flag(0)), greedy_search(0, 0, Moves, [(0, 0)]).  % Greedyy search
 
 % ================= BACKTRACKING SEARCH =================
 backtracking_search(X, Y, [], _) :- is_touchdown(X, Y),  % Base case
     write("Jesus we got it! "), write(X), write(" "), write(Y), nl.
 backtracking_search(X, Y, [Step | Moves], Visited) :-  % Recursion step
-    step(X, Y, X_NEXT, Y_NEXT, Step),
+    step(X, Y, X_NEXT, Y_NEXT, Step), 
     check_position(X_NEXT, Y_NEXT, Visited),
+    score(Score), (h(X_NEXT, Y_NEXT) -> true; (retractall(score(_)), Score1 is Score + 1, assert(score(Score1)))),
     backtracking_search(X_NEXT, Y_NEXT, Moves, [(X, Y) | Visited]).
 
 % ================= RANDOM SEARCH =================
 random_loop(0) :-  solved(1) -> !; writeln("A path is not found:(").  % Loop base case 
 random_loop(NumberAttemp) :-  % Loop step case
-    % writeln(NumberAttemp),
-    (random_search(0, 0, Moves, [(0, 0)]) -> (length(Moves, Length1), path(_, Length))
-    -> (Length1 < Length -> (retractall(path(_,_)), assert(path(Moves, Length1))) ; true)
+    retractall(score(_)), retractall(flag(_)), assert(score(0)), assert(flag(0)),
+    (random_search(0, 0, Moves, [(0, 0)]) -> (score(Score_new), path(_, Score_old))
+    -> (Score_new < Score_old -> (retractall(path(_,_)), assert(path(Moves, Score_new))) ; true)
     ); 
     NumberAttemp1 is NumberAttemp - 1,
     random_loop(NumberAttemp1).
-
 
 random_search(X, Y, [], _) :- is_touchdown(X, Y), assert(solved(1)),  % Base case
     write("Jesus we got it! "), write(X), write(" "), write(Y), nl.
 random_search(X, Y, [Step | Moves], Visited) :-  % Recursion step
     random_member(Step, [up, right, down, left]),% pass_up, pass_right, pass_down, pass_left, pass_up_rigth, pass_down_rigth, pass_down_left, pass_up_left]),
     step(X, Y, X_NEXT, Y_NEXT, Step), !, 
-    check_position(X_NEXT, Y_NEXT, Visited) -> random_search(X_NEXT, Y_NEXT, Moves, [(X, Y) | Visited]).
-
-
+    check_position(X_NEXT, Y_NEXT, Visited) -> 
+    (
+        score(Score), (h(X_NEXT, Y_NEXT) -> true; (retractall(score(_)), Score1 is Score + 1, assert(score(Score1)))),
+        random_search(X_NEXT, Y_NEXT, Moves, [(X, Y) | Visited])
+    ).
 
 % ================= GREEDY SEARCH =================
-greedy_search(X, Y, [], _) :- is_touchdown(X, Y), 
+greedy_search(X, Y, [], _) :- is_touchdown(X, Y), assert(solved(1)),  % Base case
     write("Jesus we got it! "), write(X), write(" "), write(Y), nl.
-greedy_search(X, Y, [Step | Moves], Visited) :-
-    step(X, Y, X_NEXT, Y_NEXT, Step),
-    check_position(X_NEXT, Y_NEXT, Visited),
-    write("I am on: "), write(X), write(" "), write(Y), nl,
-    greedy_search(X_NEXT, Y_NEXT, Moves, [(X, Y) | Visited]).
+greedy_search(X, Y, [Step | Moves], Visited) :-  % Recursion step
+    random_member(Step, [up, right, down, left]),% pass_up, pass_right, pass_down, pass_left, pass_up_rigth, pass_down_rigth, pass_down_left, pass_up_left]),
+
+    step(X, Y, X_NEXT, Y_NEXT, Step), !, 
+    check_position(X_NEXT, Y_NEXT, Visited) -> random_search(X_NEXT, Y_NEXT, Moves, [(X, Y) | Visited]).
 
 % ================= PASS =================
 step(X, Y, X_NEXT, Y_NEXT, pass_up) :-  % Pass UP
@@ -165,7 +167,7 @@ go:-
     % Calculate output
     statistics(runtime,[Stop|_]),
     ExecutionTime is Stop - Start,
-    length(Moves, Len),
-    write("Number of steps: "), write(Len), nl,
+    score(X),
+    write("Number of steps: "), writeln(X),
     write("The path is "), write(Moves), nl,
     write('Execution time: '), write(ExecutionTime), write(' ms.'), nl, abort.
