@@ -94,64 +94,68 @@ step(X, Y, X_NEXT, Y_NEXT, pass_up) :-  % Pass UP
     flag(0),
     h(X, Y_NEXT),
     Y_NEXT > Y,
-    o(X, Y_orc), Y_orc > Y, Y_orc < Y_NEXT,
+    not((o(X, Y_orc), Y_orc > Y, Y_orc < Y_NEXT)),
     X_NEXT is X,
-    retract(flag(_));
+    retract(flag(_)),
     assert(flag(1)).
 
 step(X, Y, X_NEXT, Y_NEXT, pass_right) :-  % Pass RIRHT
     flag(0),
     h(X_NEXT, Y),
     X_NEXT > X,
-    o(X_orc, Y), X_orc > X, X_orc < X_NEXT,
+    not((o(X_orc, Y), X_orc > X, X_orc < X_NEXT)),
     Y_NEXT is Y,
-    retract(flag(_));
+    retract(flag(_)),
     assert(flag(1)).
 
 step(X, Y, X_NEXT, Y_NEXT, pass_down) :-  % Pass DOWN
     flag(0),
     h(X, Y_NEXT),
     Y_NEXT > Y,
-    o(X, Y_orc), Y_orc < Y, Y_orc > Y_NEXT,
+    not((o(X, Y_orc), Y_orc < Y, Y_orc > Y_NEXT)),
     X_NEXT is X,
-    retract(flag(_));
+    retract(flag(_)),
     assert(flag(1)).
 
 step(X, Y, X_NEXT, Y_NEXT, pass_left) :-  % Pass Left
     flag(0),
     h(X_NEXT, Y),
     X_NEXT > X,
-    o(X_orc, Y), X_orc < X, X_orc > X_NEXT,
+    not((o(X_orc, Y), X_orc < X, X_orc > X_NEXT)),
     Y_NEXT is Y,
-    retract(flag(_));
+    retract(flag(_)),
     assert(flag(1)).
 
 step(X, Y, X_NEXT, Y_NEXT, pass_up_rigth) :-  % Pass UP-Right
     flag(0),
     h(X_NEXT, Y_NEXT),
-    o(X_orc, Y_orc), X_orc > X, X_orc < X_NEXT, Y_orc > Y, Y_orc < Y_NEXT,
-    retract(flag(_));
+    not((o(X_orc, Y_orc), X_DIF is X_orc - X, Y_DIF is Y_orc - Y)),
+    not(((Y_orc < Y_NEXT), (Y_orc > Y), (X_orc < X_NEXT), (X_orc > X), (X_DIF is Y_DIF))),
+    retract(flag(_)),
     assert(flag(1)).
 
 step(X, Y, X_NEXT, Y_NEXT, pass_down_rigth) :-  % Pass RIRHT-Down
     flag(0),
     h(X_NEXT, Y_NEXT),
-    o(X_orc, Y_orc), X_orc > X, X_orc < X_NEXT, Y_orc < Y, Y_orc > Y_NEXT,
-    retract(flag(_));
+    not(( o(X_orc, Y_orc), X_DIF is X_orc - X, Y_DIF is Y - Y_orc)),
+    not(((Y_orc > Y_NEXT), (Y_orc < Y), (X_orc < X_NEXT), (X_orc > X), (X_DIF is Y_DIF))),
+    retract(flag(_)),
     assert(flag(1)).
 
 step(X, Y, X_NEXT, Y_NEXT, pass_down_left) :-  % Pass Left-DOWN
     flag(0),
     h(X_NEXT, Y_NEXT),
-    o(X_orc, Y_orc), X_orc < X, X_orc > X_NEXT, Y_orc < Y, Y_orc > Y_NEXT,
-    retract(flag(_));
+    not((o(X_orc, Y_orc), X_DIF is X - X_orc, Y_DIF is Y - Y_orc)),
+    not(((Y_orc > Y_NEXT), (Y_orc < Y), (X_orc > X_NEXT), (X_orc < X), (X_DIF is Y_DIF))),
+    retract(flag(_)),
     assert(flag(1)).
 
 step(X, Y, X_NEXT, Y_NEXT, pass_up_left) :-  % Pass Up-Left
     flag(0),
     h(X_NEXT, Y_NEXT),
-    o(X_orc, Y_orc), X_orc < X, X_orc > X_NEXT, Y_orc > Y, Y_orc < Y_NEXT,
-    retract(flag(_));
+    not((o(X_orc, Y_orc), X_DIF is X - X_orc, Y_DIF is Y_orc - Y)),
+    not(((Y_orc < Y_NEXT), (Y_orc > Y), (X_orc > X_NEXT), (X_orc < X), (X_DIF is Y_DIF))),
+    retract(flag(_)),
     assert(flag(1)).
 
 % ================= STEPS =================
