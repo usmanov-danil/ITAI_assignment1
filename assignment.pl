@@ -23,6 +23,7 @@ check_position(X, Y, Visited) :-  % Check position on safety: not orc and not vi
 is_touchdown(X, Y) :-  % Check: is it touchdown point
     t(X, Y).
 
+% ================= SEARCH VARIANTS =================
 choose_search(backtracking, Moves) :- assert(flag(0)), assert(score(0)), backtracking_search(0, 0, Moves, [(0, 0)]).  % Backtracking search
 choose_search(random, Moves) :- assert(flag(0)), assert(score(0)), assert(path([], inf)), retractall(solved(_)), random_loop(10000), path(Moves, _).  % Random search  % random_search(0, 0, Moves, [(0, 0)])
 choose_search(greedy, Moves) :- assert(flag(0)), greedy_search(0, 0, Moves, [(0, 0)]).  % Greedyy search
@@ -58,13 +59,16 @@ random_search(X, Y, [Step | Moves], Visited) :-  % Recursion step
     ).
 
 % ================= GREEDY SEARCH =================
-greedy_search(X, Y, [], _) :- is_touchdown(X, Y), assert(solved(1)),  % Base case
+greedy_search(X, Y, [], _) :- is_touchdown(X, Y),  % Base case
     write("Jesus we got it! "), write(X), write(" "), write(Y), nl.
 greedy_search(X, Y, [Step | Moves], Visited) :-  % Recursion step
-    random_member(Step, [up, right, down, left]),% pass_up, pass_right, pass_down, pass_left, pass_up_rigth, pass_down_rigth, pass_down_left, pass_up_left]),
-
+    
     step(X, Y, X_NEXT, Y_NEXT, Step), !, 
-    check_position(X_NEXT, Y_NEXT, Visited) -> random_search(X_NEXT, Y_NEXT, Moves, [(X, Y) | Visited]).
+    check_position(X_NEXT, Y_NEXT, Visited) -> 
+    (
+        score(Score), (h(X_NEXT, Y_NEXT) -> true; (retractall(score(_)), Score1 is Score + 1, assert(score(Score1)))),
+        greedy_search(X_NEXT, Y_NEXT, Moves, [(X, Y) | Visited])
+    ).
 
 % ================= PASS =================
 step(X, Y, X_NEXT, Y_NEXT, pass_up) :-  % Pass UP
@@ -148,7 +152,7 @@ step(X, Y, X_NEXT, Y_NEXT, left) :-  % Step Left
     X_NEXT is X - 1,
     Y_NEXT is Y.
 
-% Main
+% ================= MAIN =================
 go:-
     % Init
     statistics(runtime,[Start|_]),
