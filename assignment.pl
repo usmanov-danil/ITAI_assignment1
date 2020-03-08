@@ -1,16 +1,62 @@
 % Input: Put here positions of orcs, humans and touchdown as <type>(X,Y)
 %  include(input.pl).  % If you want to include input file with facts, uncomment this line and put file uinput,pl near the current file.
 
-o(1, 0).
 o(1, 1).
-o(1, 3).
-o(2, 2).
-h(3, 0).
-t(3, 3).
+o(2, 1).
+o(3, 1).
+o(4, 1).
+o(5, 1).
+o(6, 1).
+o(7, 1).
+o(8, 1).
+o(9, 1).
 
+o(0, 3).
+o(1, 3).
+o(2, 3).
+o(3, 3).
+o(4, 3).
+o(5, 3).
+o(6, 3).
+o(7, 3).
+o(8, 3).
+
+o(1, 5).
+o(2, 5).
+o(3, 5).
+o(4, 5).
+o(5, 5).
+o(6, 5).
+o(7, 5).
+o(8, 5).
+o(9, 5).
+
+o(0, 7).
+o(1, 7).
+o(2, 7).
+o(3, 7).
+o(4, 7).
+o(5, 7).
+o(6, 7).
+o(7, 7).
+o(8, 7).
+
+o(0, 9).
+o(1, 9).
+o(2, 9).
+o(3, 9).
+o(4, 9).
+o(5, 9).
+o(6, 9).
+o(7, 9).
+o(8, 9).
+o(9, 9).
+
+h(1, 8).
+t(0, 8).
 
 % ================= Facts =================
-size(5).  % The size of one side of the field
+size(10).  % The size of one side of the field
 attemp(100000). % The number of attemps for random search
 :- dynamic([flag/1, solved/1, path/2, score/1, min_hypt/2, flag2/1]).  % Dynamic fact
 
