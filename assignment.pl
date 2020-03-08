@@ -3,10 +3,8 @@
 
 o(0, 1).
 o(1, 1).
-o(2, 2).
-h(3, 3).
-t(0, 2).
-
+h(2, 2).
+t(3, 2).
 
 % ================= Facts =================
 size(4).  % The size of one side of the field
@@ -87,7 +85,7 @@ greedy_search(X, Y, [], _) :- is_touchdown(X, Y),  % Base case
 greedy_search(X, Y, [Step | Moves], Visited) :-  % Recursion step
     retractall(min_hypt(_,_)), assert(min_hypt(up, inf)),
     retractall(flag2(_)), assert(flag2(0)),
-    greedy_imp(Step, [up, right, down, left, pass_up, pass_right, pass_down, pass_left, pass_up_right, pass_down_right, pass_down_left, pass_up_left], X, Y, Visited),
+    greedy(Step, [up, right, down, left, pass_up, pass_right, pass_down, pass_left, pass_up_right, pass_down_right, pass_down_left, pass_up_left], X, Y, Visited),
     step(X, Y, X_NEXT, Y_NEXT, Step), !, 
     check_position(X_NEXT, Y_NEXT, Visited) -> 
     (
@@ -183,7 +181,7 @@ step(X, Y, X_NEXT, Y_NEXT, pass_up_right) :-  % Pass UP-Right
 
 step(X, Y, X_NEXT, Y_NEXT, pass_down_right) :-  % Pass RIRHT-Down
     flag(0),
-    h(X_NEXT, Y_NEXT), (X_NEXT - X) =:= (Y - Y_NEXT), Y_NEXT < Y, X_NEXT > x,
+    h(X_NEXT, Y_NEXT), (X_NEXT - X) =:= (Y - Y_NEXT), Y_NEXT < Y, X_NEXT > X,
     (( h(X_hum, Y_hum), X_DIF_HUM is X_hum - X, Y_DIF_HUM is Y - Y_hum)),
     not(((Y_hum > Y_NEXT), (Y_hum < Y), (X_hum < X_NEXT), (X_hum > X), (X_DIF_HUM == Y_DIF_HUM))),
     (( o(X_orc, Y_orc), X_DIF is X_orc - X, Y_DIF is Y - Y_orc)), (X_orc - X) =:= (Y - Y_orc),
@@ -233,13 +231,13 @@ go:-
     statistics(runtime,[Start|_]),
 
     % Simple backtracking
-    choose_search(backtracking, Moves),
+    % choose_search(backtracking, Moves),
 
     % Random 
     % choose_search(random, Moves),
 
     % Greedy
-    % choose_search(greedy, Moves),
+    choose_search(greedy, Moves),
 
     % Improoved greedy search
     % choose_search(greedy_improoved, Moves),
