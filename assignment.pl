@@ -1,62 +1,17 @@
-% Input: Put here positions of orcs, humans and touchdown as <type>(X,Y)
-%  include(input.pl).  % If you want to include input file with facts, uncomment this line and put file uinput,pl near the current file.
+% Input: Put here positions of orcs, humans and touchdown as <type>(X,Y) or remove all these facts and uncomment line below to import prolog file
+% include(input.pl).  % If you want to include input file with facts, uncomment this line and put file uinput,pl near the current file.
 
+o(1, 0).
 o(1, 1).
-o(2, 1).
+o(1, 2).
+o(3, 0).
 o(3, 1).
-o(4, 1).
-o(5, 1).
-o(6, 1).
-o(7, 1).
-o(8, 1).
-o(9, 1).
-
-o(0, 3).
-o(1, 3).
-o(2, 3).
-o(3, 3).
-o(4, 3).
-o(5, 3).
-o(6, 3).
-o(7, 3).
-o(8, 3).
-
-o(1, 5).
-o(2, 5).
-o(3, 5).
-o(4, 5).
-o(5, 5).
-o(6, 5).
-o(7, 5).
-o(8, 5).
-o(9, 5).
-
-o(0, 7).
-o(1, 7).
-o(2, 7).
-o(3, 7).
-o(4, 7).
-o(5, 7).
-o(6, 7).
-o(7, 7).
-o(8, 7).
-
-o(0, 9).
-o(1, 9).
-o(2, 9).
-o(3, 9).
-o(4, 9).
-o(5, 9).
-o(6, 9).
-o(7, 9).
-o(8, 9).
-o(9, 9).
-
-h(1, 8).
-t(0, 8).
+o(3, 2).
+h(4, 0).
+t(4, 0).
 
 % ================= Facts =================
-size(10).  % The size of one side of the field
+size(5).  % The size of one side of the field
 attemp(100000). % The number of attemps for random search
 :- dynamic([flag/1, solved/1, path/2, score/1, min_hypt/2, flag2/1]).  % Dynamic fact
 
@@ -66,7 +21,7 @@ wall_check(X, Y) :-  % Check that player is the inside field
     X >= 0, X =< (Size - 1),
     Y >= 0, Y =< (Size - 1).
 
-check_position(X, Y, Visited) :-  % Check position on safety: not orc and not visited.
+check_position(X, Y, Visited) :-  % Check position on safety: not orc and not visited, inside the field.
     not(o(X, Y)),
     wall_check(X, Y),
     not(memberchk((X, Y), Visited)).
@@ -86,7 +41,7 @@ backtracking_search(X, Y, [], _) :- is_touchdown(X, Y),  % Base case
 backtracking_search(X, Y, [Step | Moves], Visited) :-  % Recursion step
     step(X, Y, X_NEXT, Y_NEXT, Step), 
     check_position(X_NEXT, Y_NEXT, Visited),
-    score(Score), (h(X_NEXT, Y_NEXT) -> true; (retractall(score(_)), Score1 is Score + 1, assert(score(Score1)))),
+    score(Score), (h(X_NEXT, Y_NEXT) -> true; (retractall(score(_)), Score1 is Score + 1, assert(score(Score1)))),  % Increase score
     backtracking_search(X_NEXT, Y_NEXT, Moves, [(X, Y) | Visited]).
 
 % ================= RANDOM SEARCH =================
@@ -107,12 +62,12 @@ random_search(X, Y, [Step | Moves], Visited) :-  % Recursion step
     check_position(X_NEXT, Y_NEXT, Visited) -> 
     (
         score(Score), (h(X_NEXT, Y_NEXT) -> true; (retractall(score(_)),
-         Score1 is Score + 1, assert(score(Score1)))),
+         Score1 is Score + 1, assert(score(Score1)))),  % Increase score
         random_search(X_NEXT, Y_NEXT, Moves, [(X, Y) | Visited])
     ).
 
 % ================= GREEDY SEARCH =================
-calc_hypt(X, Y, Step, Length, Visited) :-
+calc_hypt(X, Y, Step, Length, Visited) :-  % Calculating hypotenuse
     (flag(0) -> (retractall(flag2(_)), assert(flag2(0))) ; 
     (retractall(flag2(_)), assert(flag2(1)))),
     t(X_TOUCH, Y_TOUCH),
@@ -123,7 +78,7 @@ calc_hypt(X, Y, Step, Length, Visited) :-
     ;
         Length is inf
     ).
-greedy(Step, [], _, _, _) :- min_hypt(Step, _).
+greedy(Step, [], _, _, _) :- min_hypt(Step, _).  % Finding the best move
 greedy(Step, [First | Tail], X, Y, Visited) :-
     calc_hypt(X, Y, First, Length, Visited), min_hypt(_, Min_length),
     (Length < Min_length -> (retractall(min_hypt(_,_)), assert(min_hypt(First, Length))) ; true),
@@ -139,12 +94,12 @@ greedy_search(X, Y, [Step | Moves], Visited) :-  % Recursion step
     check_position(X_NEXT, Y_NEXT, Visited) -> 
     (
         score(Score), (h(X_NEXT, Y_NEXT) -> true; (retractall(score(_)), 
-        Score1 is Score + 1, assert(score(Score1)))),
+        Score1 is Score + 1, assert(score(Score1)))),  % Increase score
         greedy_search(X_NEXT, Y_NEXT, Moves, [(X, Y) | Visited])
     ).
 
 % ================= IMPROOVED GREEDY SEARCH =================
-calc_hypt_imp(X, Y, Step, Length, Visited) :-
+calc_hypt_imp(X, Y, Step, Length, Visited) :-  % Calculating hypotenuse
     (flag(0) -> (retractall(flag2(_)), assert(flag2(0))) ; 
     (retractall(flag2(_)), assert(flag2(1)))),
     t(X_TOUCH, Y_TOUCH),
@@ -157,7 +112,7 @@ calc_hypt_imp(X, Y, Step, Length, Visited) :-
         Length is inf
     ).
     
-greedy_imp(Step, [], _, _, _) :- min_hypt(Step, _).
+greedy_imp(Step, [], _, _, _) :- min_hypt(Step, _).   % Finding the best move
 greedy_imp(Step, [First | Tail], X, Y, Visited) :-
     calc_hypt_imp(X, Y, First, Length, Visited), min_hypt(_, Min_length),
     (Length < Min_length -> (retractall(min_hypt(_,_)), assert(min_hypt(First, Length))) ; true),
@@ -227,7 +182,7 @@ step(X, Y, X_NEXT, Y_NEXT, pass_up_right) :-  % Pass UP-Right
     retract(flag(_)),
     assert(flag(1)).
 
-step(X, Y, X_NEXT, Y_NEXT, pass_down_right) :-  % Pass RIRHT-Down
+step(X, Y, X_NEXT, Y_NEXT, pass_down_right) :-  % Pass RIRHT-DOWN
     flag(0),
     h(X_NEXT, Y_NEXT), (X_NEXT - X) =:= (Y - Y_NEXT), Y_NEXT < Y, X_NEXT > X,
     (( h(X_hum, Y_hum), X_DIF_HUM is X_hum - X, Y_DIF_HUM is Y - Y_hum)),
@@ -245,7 +200,7 @@ step(X, Y, X_NEXT, Y_NEXT, pass_down_left) :-  % Pass Left-DOWN
     retract(flag(_)),
     assert(flag(1)).
 
-step(X, Y, X_NEXT, Y_NEXT, pass_up_left) :-  % Pass Up-Left
+step(X, Y, X_NEXT, Y_NEXT, pass_up_left) :-  % Pass UP-LEFT
     flag(0),
     h(X_NEXT, Y_NEXT), (X - X_NEXT) =:= (Y_NEXT - Y), Y_NEXT > Y, X_NEXT < X,
     ((h(X_hum, Y_hum), X_DIF_HUM is X - X_hum, Y_DIF_HUM is Y_hum - Y)),
@@ -273,7 +228,9 @@ step(X, Y, X_NEXT, Y_NEXT, left) :-  % Step Left
 
 % ================= MAIN =================
 go:-
-    statistics(runtime,[Start|_]),
+    statistics(runtime,[Start|_]),  % Save time of start
+
+    % Uncomment choose_search query to use desired search method. Other queries should be commented!
 
     % Simple backtracking
     choose_search(backtracking, Moves),
@@ -288,9 +245,9 @@ go:-
     % choose_search(greedy_improoved, Moves),
 
     % Calculate output
-    statistics(runtime,[Stop|_]),
-    ExecutionTime is Stop - Start,
-    score(X),
+    statistics(runtime,[Stop|_]),  % Save time of end
+    ExecutionTime is Stop - Start,  % evaluate execution time
+    score(X),  % Get score
     write("Number of steps: "), writeln(X),
     write("The path is "), write(Moves), nl,
     write('Execution time: '), write(ExecutionTime), write(' ms.'), nl, abort.
