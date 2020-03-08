@@ -1,15 +1,15 @@
 % Input: Put here positions of orcs, humans and touchdown as <type>(X,Y)
 %  include(input.pl).  % If you want to include input file with facts, uncomment this line and put file uinput,pl near the current file.
 
-o(3, 1).
-o(1, 2).
-o(1, 3).
-h(3, 2).
+o(0, 1).
+o(1, 1).
+o(2, 2).
 h(3, 3).
-t(1, 4).
+t(0, 2).
+
 
 % ================= Facts =================
-size(5).  % The size of one side of the field
+size(4).  % The size of one side of the field
 attemp(100000). % The number of attemps for random search
 :- dynamic([flag/1, solved/1, path/2, score/1, min_hypt/2, flag2/1]).  % Dynamic fact
 
@@ -71,7 +71,7 @@ calc_hypt(X, Y, Step, Length, Visited) :-
     t(X_TOUCH, Y_TOUCH),
     (step(X, Y, X_NEXT, Y_NEXT, Step) -> 
     (flag2(0) -> (retractall(flag(_)), assert(flag(0))); true),
-    (check_position(X_NEXT, Y_NEXT, Visited)
+    (check_position(X_NEXT, Y_NEXT, Visited), X_DIF is abs((X_NEXT - X)), Y_DIF is abs((Y_NEXT-Y)), Y_DIF =< 1, X_DIF =< 1
     -> (Length is sqrt((X_TOUCH - X_NEXT)**2 + (Y_TOUCH - Y_NEXT)**2)) ; Length is inf)
     ;
         Length is inf
@@ -87,7 +87,7 @@ greedy_search(X, Y, [], _) :- is_touchdown(X, Y),  % Base case
 greedy_search(X, Y, [Step | Moves], Visited) :-  % Recursion step
     retractall(min_hypt(_,_)), assert(min_hypt(up, inf)),
     retractall(flag2(_)), assert(flag2(0)),
-    greedy(Step, [up, right, down, left], X, Y, Visited),
+    greedy_imp(Step, [up, right, down, left, pass_up, pass_right, pass_down, pass_left, pass_up_right, pass_down_right, pass_down_left, pass_up_left], X, Y, Visited),
     step(X, Y, X_NEXT, Y_NEXT, Step), !, 
     check_position(X_NEXT, Y_NEXT, Visited) -> 
     (
@@ -104,7 +104,7 @@ calc_hypt_imp(X, Y, Step, Length, Visited) :-
 
     (step(X, Y, X_NEXT, Y_NEXT, Step) -> 
     (flag2(0) -> (retractall(flag(_)), assert(flag(0))); true),
-    (check_position(X_NEXT, Y_NEXT, Visited), X_DIF is abs((X_NEXT - X)), Y_DIF is abs((Y_NEXT-Y)), Y_DIF =< 2, X_DIF =< 2 % Add checking that our step in valid area also don't forget to fix passes
+    (check_position(X_NEXT, Y_NEXT, Visited), X_DIF is abs((X_NEXT - X)), Y_DIF is abs((Y_NEXT-Y)), Y_DIF =< 2, X_DIF =< 2
     -> (Length is sqrt((X_TOUCH - X_NEXT)**2 + (Y_TOUCH - Y_NEXT)**2)) ; Length is inf)
     ;
         Length is inf
@@ -173,41 +173,41 @@ step(X, Y, X_NEXT, Y_NEXT, pass_left) :-  % Pass Left
 
 step(X, Y, X_NEXT, Y_NEXT, pass_up_right) :-  % Pass UP-Right
     flag(0),
-    h(X_NEXT, Y_NEXT), (X_NEXT - X) =:= (Y_NEXT - Y),
+    h(X_NEXT, Y_NEXT), (X_NEXT - X) =:= (Y_NEXT - Y), X_NEXT > X, Y_NEXT > Y,
     ((h(X_hum, Y_hum), X_DIF_HUM is X_hum - X, Y_DIF_HUM is Y_hum - Y)),
-    not(((Y_hum < Y_NEXT), (Y_hum > Y), (X_hum < X_NEXT), (X_hum > X), (X_DIF_HUM is Y_DIF_HUM))),
-    ((o(X_orc, Y_orc), X_DIF is X_orc - X, Y_DIF is Y_orc - Y)),
-    not(((Y_orc < Y_NEXT), (Y_orc > Y), (X_orc < X_NEXT), (X_orc > X), (X_DIF is Y_DIF))),
+    not(((Y_hum < Y_NEXT), (Y_hum > Y), (X_hum < X_NEXT), (X_hum > X), (X_DIF_HUM == Y_DIF_HUM))),
+    ((o(X_orc, Y_orc), X_DIF is X_orc - X, Y_DIF is Y_orc - Y)), (X_orc - X) =:= (Y_orc - Y),
+    not(((Y_orc < Y_NEXT), (Y_orc > Y), (X_orc < X_NEXT), (X_orc > X), (X_DIF == Y_DIF))),
     retract(flag(_)),
     assert(flag(1)).
 
 step(X, Y, X_NEXT, Y_NEXT, pass_down_right) :-  % Pass RIRHT-Down
     flag(0),
-    h(X_NEXT, Y_NEXT), (X_NEXT - X) =:= (Y - Y_NEXT),
+    h(X_NEXT, Y_NEXT), (X_NEXT - X) =:= (Y - Y_NEXT), Y_NEXT < Y, X_NEXT > x,
     (( h(X_hum, Y_hum), X_DIF_HUM is X_hum - X, Y_DIF_HUM is Y - Y_hum)),
-    not(((Y_hum > Y_NEXT), (Y_hum < Y), (X_hum < X_NEXT), (X_hum > X), (X_DIF_HUM is Y_DIF_HUM))),
-    (( o(X_orc, Y_orc), X_DIF is X_orc - X, Y_DIF is Y - Y_orc)),
-    not(((Y_orc > Y_NEXT), (Y_orc < Y), (X_orc < X_NEXT), (X_orc > X), (X_DIF is Y_DIF))),
+    not(((Y_hum > Y_NEXT), (Y_hum < Y), (X_hum < X_NEXT), (X_hum > X), (X_DIF_HUM == Y_DIF_HUM))),
+    (( o(X_orc, Y_orc), X_DIF is X_orc - X, Y_DIF is Y - Y_orc)), (X_orc - X) =:= (Y - Y_orc),
+    not(((Y_orc > Y_NEXT), (Y_orc < Y), (X_orc < X_NEXT), (X_orc > X), (X_DIF == Y_DIF))),
     retract(flag(_)),
     assert(flag(1)).
 
 step(X, Y, X_NEXT, Y_NEXT, pass_down_left) :-  % Pass Left-DOWN
     flag(0),
-    h(X_NEXT, Y_NEXT), (X - X_NEXT) =:= (Y - Y_NEXT),
+    h(X_NEXT, Y_NEXT), (X - X_NEXT) =:= (Y - Y_NEXT), X_NEXT < X, Y_NEXT < Y,
     ((h(X_hum, Y_hum), X_DIF_HUM is X - X_hum, Y_DIF_HUM is Y - Y_hum)),
-    not(((Y_hum > Y_NEXT), (Y_hum < Y), (X_hum > X_NEXT), (X_hum < X), (X_DIF_HUM is Y_DIF_HUM))),
-    ((o(X_orc, Y_orc), X_DIF is X - X_orc, Y_DIF is Y - Y_orc)),
-    not(((Y_orc > Y_NEXT), (Y_orc < Y), (X_orc > X_NEXT), (X_orc < X), (X_DIF is Y_DIF))),
+    not(((Y_hum > Y_NEXT), (Y_hum < Y), (X_hum > X_NEXT), (X_hum < X), (X_DIF_HUM == Y_DIF_HUM))),
+    ((o(X_orc, Y_orc), X_DIF is X - X_orc, Y_DIF is Y - Y_orc)), (X - X_orc) =:= (Y - Y_orc),
+    not(((Y_orc > Y_NEXT), (Y_orc < Y), (X_orc > X_NEXT), (X_orc < X), (X_DIF == Y_DIF))),
     retract(flag(_)),
     assert(flag(1)).
 
 step(X, Y, X_NEXT, Y_NEXT, pass_up_left) :-  % Pass Up-Left
     flag(0),
-    h(X_NEXT, Y_NEXT), (X - X_NEXT) =:= (Y_NEXT - Y),
+    h(X_NEXT, Y_NEXT), (X - X_NEXT) =:= (Y_NEXT - Y), Y_NEXT > Y, X_NEXT < X,
     ((h(X_hum, Y_hum), X_DIF_HUM is X - X_hum, Y_DIF_HUM is Y_hum - Y)),
-    not(((Y_hum < Y_NEXT), (Y_hum > Y), (X_hum > X_NEXT), (X_hum < X), (X_DIF_HUM is Y_DIF_HUM))),
-    ((o(X_orc, Y_orc), X_DIF is X - X_orc, Y_DIF is Y_orc - Y)),
-    not(((Y_orc < Y_NEXT), (Y_orc > Y), (X_orc > X_NEXT), (X_orc < X), (X_DIF is Y_DIF))),
+    not(((Y_hum < Y_NEXT), (Y_hum > Y), (X_hum > X_NEXT), (X_hum < X), (X_DIF_HUM == Y_DIF_HUM))),
+    ((o(X_orc, Y_orc), X_DIF is X - X_orc, Y_DIF is Y_orc - Y)), (X - X_orc) =:= (Y_orc - Y),
+    not(((Y_orc < Y_NEXT), (Y_orc > Y), (X_orc > X_NEXT), (X_orc < X), (X_DIF == Y_DIF))),
     retract(flag(_)),
     assert(flag(1)).
 
