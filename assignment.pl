@@ -1,12 +1,16 @@
 % Input: Put here positions of orcs, humans and touchdown as <type>(X,Y)
 %  include(input.pl).  % If you want to include input file with facts, uncomment this line and put file uinput,pl near the current file.
 
-o(0, 1).
 o(1, 0).
-h(2, 2).
-t(3, 2).
+o(1, 1).
+o(1, 3).
+o(2, 2).
+h(3, 0).
+t(3, 3).
+
+
 % ================= Facts =================
-size(4).  % The size of one side of the field
+size(5).  % The size of one side of the field
 attemp(100000). % The number of attemps for random search
 :- dynamic([flag/1, solved/1, path/2, score/1, min_hypt/2, flag2/1]).  % Dynamic fact
 
@@ -173,8 +177,7 @@ step(X, Y, X_NEXT, Y_NEXT, pass_up_right) :-  % Pass UP-Right
     h(X_NEXT, Y_NEXT), (X_NEXT - X) =:= (Y_NEXT - Y), X_NEXT > X, Y_NEXT > Y,
     ((h(X_hum, Y_hum), X_DIF_HUM is X_hum - X, Y_DIF_HUM is Y_hum - Y)),
     not(((Y_hum < Y_NEXT), (Y_hum > Y), (X_hum < X_NEXT), (X_hum > X), (X_DIF_HUM == Y_DIF_HUM))),
-    ((o(X_orc, Y_orc), X_DIF is X_orc - X, Y_DIF is Y_orc - Y)),
-    not(((X_orc - X) =:= (Y_orc - Y),(Y_orc < Y_NEXT), (Y_orc > Y), (X_orc < X_NEXT), (X_orc > X), (X_DIF == Y_DIF))),
+    not((((o(X_orc, Y_orc), X_DIF is X_orc - X, Y_DIF is Y_orc - Y)),(X_orc - X) =:= (Y_orc - Y),(Y_orc < Y_NEXT), (Y_orc > Y), (X_orc < X_NEXT), (X_orc > X), (X_DIF == Y_DIF))),
     retract(flag(_)),
     assert(flag(1)).
 
@@ -183,8 +186,7 @@ step(X, Y, X_NEXT, Y_NEXT, pass_down_right) :-  % Pass RIRHT-Down
     h(X_NEXT, Y_NEXT), (X_NEXT - X) =:= (Y - Y_NEXT), Y_NEXT < Y, X_NEXT > X,
     (( h(X_hum, Y_hum), X_DIF_HUM is X_hum - X, Y_DIF_HUM is Y - Y_hum)),
     not(((Y_hum > Y_NEXT), (Y_hum < Y), (X_hum < X_NEXT), (X_hum > X), (X_DIF_HUM == Y_DIF_HUM))),
-    (( o(X_orc, Y_orc), X_DIF is X_orc - X, Y_DIF is Y - Y_orc)), 
-    not(((X_orc - X) =:= (Y - Y_orc),(Y_orc > Y_NEXT), (Y_orc < Y), (X_orc < X_NEXT), (X_orc > X), (X_DIF == Y_DIF))),
+    not(((( o(X_orc, Y_orc), X_DIF is X_orc - X, Y_DIF is Y - Y_orc)), (X_orc - X) =:= (Y - Y_orc),(Y_orc > Y_NEXT), (Y_orc < Y), (X_orc < X_NEXT), (X_orc > X), (X_DIF == Y_DIF))),
     retract(flag(_)),
     assert(flag(1)).
 
@@ -193,8 +195,7 @@ step(X, Y, X_NEXT, Y_NEXT, pass_down_left) :-  % Pass Left-DOWN
     h(X_NEXT, Y_NEXT), (X - X_NEXT) =:= (Y - Y_NEXT), X_NEXT < X, Y_NEXT < Y,
     ((h(X_hum, Y_hum), X_DIF_HUM is X - X_hum, Y_DIF_HUM is Y - Y_hum)),
     not(((Y_hum > Y_NEXT), (Y_hum < Y), (X_hum > X_NEXT), (X_hum < X), (X_DIF_HUM == Y_DIF_HUM))),
-    ((o(X_orc, Y_orc), X_DIF is X - X_orc, Y_DIF is Y - Y_orc)), 
-    not(((X - X_orc) =:= (Y - Y_orc),(Y_orc > Y_NEXT), (Y_orc < Y), (X_orc > X_NEXT), (X_orc < X), (X_DIF == Y_DIF))),
+    not((((o(X_orc, Y_orc), X_DIF is X - X_orc, Y_DIF is Y - Y_orc)), (X - X_orc) =:= (Y - Y_orc),(Y_orc > Y_NEXT), (Y_orc < Y), (X_orc > X_NEXT), (X_orc < X), (X_DIF == Y_DIF))),
     retract(flag(_)),
     assert(flag(1)).
 
@@ -203,8 +204,7 @@ step(X, Y, X_NEXT, Y_NEXT, pass_up_left) :-  % Pass Up-Left
     h(X_NEXT, Y_NEXT), (X - X_NEXT) =:= (Y_NEXT - Y), Y_NEXT > Y, X_NEXT < X,
     ((h(X_hum, Y_hum), X_DIF_HUM is X - X_hum, Y_DIF_HUM is Y_hum - Y)),
     not(((Y_hum < Y_NEXT), (Y_hum > Y), (X_hum > X_NEXT), (X_hum < X), (X_DIF_HUM == Y_DIF_HUM))),
-    ((o(X_orc, Y_orc), X_DIF is X - X_orc, Y_DIF is Y_orc - Y)), 
-    not(((X - X_orc) =:= (Y_orc - Y),(Y_orc < Y_NEXT), (Y_orc > Y), (X_orc > X_NEXT), (X_orc < X), (X_DIF == Y_DIF))),
+    not((((o(X_orc, Y_orc), X_DIF is X - X_orc, Y_DIF is Y_orc - Y)), (X - X_orc) =:= (Y_orc - Y),(Y_orc < Y_NEXT), (Y_orc > Y), (X_orc > X_NEXT), (X_orc < X), (X_DIF == Y_DIF))),
     retract(flag(_)),
     assert(flag(1)).
 
@@ -230,13 +230,13 @@ go:-
     statistics(runtime,[Start|_]),
 
     % Simple backtracking
-    % choose_search(backtracking, Moves),
+    choose_search(backtracking, Moves),
 
     % Random 
     % choose_search(random, Moves),
 
     % Greedy
-    choose_search(greedy, Moves),
+    % choose_search(greedy, Moves),
 
     % Improoved greedy search
     % choose_search(greedy_improoved, Moves),
