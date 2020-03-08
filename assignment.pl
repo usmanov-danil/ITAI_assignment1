@@ -1,14 +1,15 @@
 % Input: Put here positions of orcs, humans and touchdown as <type>(X,Y)
 %  include(input.pl).  % If you want to include input file with facts, uncomment this line and put file uinput,pl near the current file.
 
-o(0, 1).
+o(3, 1).
+o(1, 2).
+o(1, 3).
 h(3, 2).
-h(2, 3).
-h(2, 2).
-t(3, 3).
+h(3, 3).
+t(1, 4).
 
 % ================= Facts =================
-size(4).  % The size of one side of the field
+size(5).  % The size of one side of the field
 attemp(100000). % The number of attemps for random search
 :- dynamic([flag/1, solved/1, path/2, score/1, min_hypt/2, flag2/1]).  % Dynamic fact
 
@@ -37,7 +38,6 @@ backtracking_search(X, Y, [], _) :- is_touchdown(X, Y),  % Base case
     write("We got it! "), write(X), write(" "), write(Y), nl.
 backtracking_search(X, Y, [Step | Moves], Visited) :-  % Recursion step
     step(X, Y, X_NEXT, Y_NEXT, Step), 
-    write(X), write(" "), writeln(Y),
     check_position(X_NEXT, Y_NEXT, Visited),
     score(Score), (h(X_NEXT, Y_NEXT) -> true; (retractall(score(_)), Score1 is Score + 1, assert(score(Score1)))),
     backtracking_search(X_NEXT, Y_NEXT, Moves, [(X, Y) | Visited]).
@@ -104,7 +104,7 @@ calc_hypt_imp(X, Y, Step, Length, Visited) :-
 
     (step(X, Y, X_NEXT, Y_NEXT, Step) -> 
     (flag2(0) -> (retractall(flag(_)), assert(flag(0))); true),
-    (check_position(X_NEXT, Y_NEXT, Visited) % Add checking that our step in valid area also don't forget to fix passes
+    (check_position(X_NEXT, Y_NEXT, Visited), X_DIF is abs((X_NEXT - X)), Y_DIF is abs((Y_NEXT-Y)), Y_DIF =< 2, X_DIF =< 2 % Add checking that our step in valid area also don't forget to fix passes
     -> (Length is sqrt((X_TOUCH - X_NEXT)**2 + (Y_TOUCH - Y_NEXT)**2)) ; Length is inf)
     ;
         Length is inf
@@ -114,14 +114,14 @@ greedy_imp(Step, [], _, _, _) :- min_hypt(Step, _).
 greedy_imp(Step, [First | Tail], X, Y, Visited) :-
     calc_hypt_imp(X, Y, First, Length, Visited), min_hypt(_, Min_length),
     (Length < Min_length -> (retractall(min_hypt(_,_)), assert(min_hypt(First, Length))) ; true),
-    greedy(Step, Tail, X, Y, Visited). 
+    greedy_imp(Step, Tail, X, Y, Visited). 
 
 greedy_search_imp(X, Y, [], _) :- is_touchdown(X, Y),  % Base case
     write("We got it! "), write(X), write(" "), write(Y), nl.
 greedy_search_imp(X, Y, [Step | Moves], Visited) :-  % Recursion step
     retractall(min_hypt(_,_)), assert(min_hypt(up, inf)),
     retractall(flag2(_)), assert(flag2(0)),
-    greedy_imp(Step, [up, right, down, left, pass_up, pass_right, pass_down, pass_left, pass_up_rigth, pass_down_rigth, pass_down_left, pass_up_left], X, Y, Visited),
+    greedy_imp(Step, [up, right, down, left, pass_up, pass_right, pass_down, pass_left, pass_up_right, pass_down_right, pass_down_left, pass_up_left], X, Y, Visited),
     step(X, Y, X_NEXT, Y_NEXT, Step), !, 
     check_position(X_NEXT, Y_NEXT, Visited) -> 
     (
@@ -171,7 +171,7 @@ step(X, Y, X_NEXT, Y_NEXT, pass_left) :-  % Pass Left
     retract(flag(_)),
     assert(flag(1)).
 
-step(X, Y, X_NEXT, Y_NEXT, pass_up_rigth) :-  % Pass UP-Right
+step(X, Y, X_NEXT, Y_NEXT, pass_up_right) :-  % Pass UP-Right
     flag(0),
     h(X_NEXT, Y_NEXT), (X_NEXT - X) =:= (Y_NEXT - Y),
     ((h(X_hum, Y_hum), X_DIF_HUM is X_hum - X, Y_DIF_HUM is Y_hum - Y)),
@@ -181,7 +181,7 @@ step(X, Y, X_NEXT, Y_NEXT, pass_up_rigth) :-  % Pass UP-Right
     retract(flag(_)),
     assert(flag(1)).
 
-step(X, Y, X_NEXT, Y_NEXT, pass_down_rigth) :-  % Pass RIRHT-Down
+step(X, Y, X_NEXT, Y_NEXT, pass_down_right) :-  % Pass RIRHT-Down
     flag(0),
     h(X_NEXT, Y_NEXT), (X_NEXT - X) =:= (Y - Y_NEXT),
     (( h(X_hum, Y_hum), X_DIF_HUM is X_hum - X, Y_DIF_HUM is Y - Y_hum)),
